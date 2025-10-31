@@ -1,0 +1,55 @@
+---
+title: "Summer25metalcandidatereport"
+output: html_document
+date: "2025-10-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+```
+
+# Process for metal-binding work
+
+Got a preprint of the catalog in June from Sarah (subject to revisions)
+
+```{r}
+#bring in
+orfs <- read.csv("https://raw.github.com/gescobedo0/metalworkup/main/neworfcatalog.csv")
+head(orfs)
+dim(orfs)
+```
+```{r}
+#preliminary cleaning (metalnet requires >29 aa)
+orfs1 <- orfs[orfs$orf_length..bp. < 300 & orfs$orf_length..bp. > 87, ]
+head(orfs1)
+dim(orfs1)
+```
+
+```{r}
+#create function for counting residues 
+orfs1$ccounts <- rep(0, length(orfs1$sequence_aa)) #initialize
+orfs1$hcounts <- rep(0, length(orfs1$sequence_aa))
+orfs1$ccounts <- sapply(orfs1$sequence_aa, function(seq) {
+  if (is.na(seq)) return(NA)
+  sum(strsplit(seq, "")[[1]] == "C")
+})
+orfs1$hcounts <- sapply(orfs1$sequence_aa, function(seq) {
+  if (is.na(seq)) return(NA)
+  sum(strsplit(seq, "")[[1]] == "H")
+})
+```
+```{r}
+mylist <- subset(orfs1, select = c(gene_name, sequence_aa, ccounts, hcounts, gene_id, X))
+#now can sort by cysteines, histidines respectively
+sortbyc <- mylist[order(mylist$ccounts, decreasing = TRUE), ]
+sortbyh <- mylist[order(mylist$hcounts, decreasing = TRUE), ]
+#by percentage of protein
+sortbycp <- mylist[order(mylist$ccounts / mylist$X, decreasing = TRUE), ]
+sortbyhp <- mylist[order(mylist$hcounts / mylist$X, decreasing = TRUE), ]
+#can look into these; 
+head(sortbycp) #gives the top few, I did write.csv to look at them in more detail
+```
+
+
+
